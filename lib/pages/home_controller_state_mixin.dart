@@ -2,10 +2,11 @@ import 'package:get/get.dart';
 import 'package:jornadagetx_statemixin/models/cep_model.dart';
 import 'package:jornadagetx_statemixin/repository/viacep_repository.dart';
 
-class HomeController extends GetxController {
+class HomeControllerStateMixin extends GetxController
+    with StateMixin<CepModel> {
   final ViacepRepository _viacepRepository;
 
-  HomeController({required ViacepRepository viacepRepository})
+  HomeControllerStateMixin({required ViacepRepository viacepRepository})
       : _viacepRepository = viacepRepository;
 
   final _cepSearch = ''.obs;
@@ -16,23 +17,21 @@ class HomeController extends GetxController {
   final _cep = Rxn<CepModel>();
   CepModel? get cep => _cep.value;
 
-  final _loading = false.obs;
-  bool get loading => _loading.value;
-
-  final _error = false.obs;
-  bool get error => _error.value;
+  @override
+  void onReady() {
+    change(state, status: RxStatus.success());
+    super.onReady();
+  }
 
   Future<void> findAddress() async {
     try {
-      _error(false);
-      _loading(true);
+      change(state, status: RxStatus.loading());
       2.seconds.delay();
       final cep = await _viacepRepository.getCep(_cepSearch.value);
       _cep(cep);
+      change(cep, status: RxStatus.success());
     } catch (e) {
-      _error(true);
-    } finally {
-      _loading(false);
+      change(state, status: RxStatus.error());
     }
   }
 }
